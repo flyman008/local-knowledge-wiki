@@ -231,6 +231,7 @@ def submit(args) -> int:
                 mp = r.get("missing_pages") or []
                 msg += f"（解析不完整：缺失/失败页码 {mp or '未标注'}）"
             print(msg)
+        print(f"[prepared] receipt_id={r['receipt_id']}")
         receipt = _get('/api/receipt/' + r['receipt_id'])
         print('分层验收：' + json.dumps(receipt.get('quality', {'automatic_check':'not_checked'}), ensure_ascii=False, indent=2))
         review_items = receipt.get('review_items', [])

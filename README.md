@@ -11,10 +11,20 @@
 ```powershell
 py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r _service/requirements.txt
-.\.venv\Scripts\python.exe _service/app.py
+.\.venv\Scripts\python.exe -m uvicorn app:app --app-dir _service --host 127.0.0.1 --port 8765
 ```
 
-浏览器打开 http://127.0.0.1:8765 。默认路径根据仓库位置生成，数据保存在根目录 `content/` 和 `_local/`，不进入 Git。安装依赖需要网络。以上是搭建步骤；本次交付未在全新电脑重新安装依赖验证。
+浏览器打开 http://127.0.0.1:8765 。默认路径根据仓库位置生成，数据保存在根目录 `content/` 和 `_local/`，不进入 Git。安装依赖需要网络。此启动方式不启动后台编译 Worker，适用于 prepared、archive 和本地检索；状态中的 worker=stopped 属于预期。请保持终端打开。本次未在全新电脑重新安装依赖验证。
+
+## 给第一次搭建的使用者
+
+1. [工作原理与能力边界](docs/architecture.md)：先理解客户端、服务与模型的分工。
+2. [从零安装与第一次入库](docs/setup.md)：包含可复制命令、仓库自带示例及验收标准。
+3. [Claude Code / Codex / WorkBuddy 接入](docs/clients.md)：安装位置、路径调整与实际接通验证。
+4. [维护、备份恢复与排错](docs/operations.md)：升级前保护数据，异常时不盲目重试。
+5. [本次交付验证记录](docs/verification.md)：区分已验证和未验证。
+
+代码采用 [MIT License](LICENSE)，可使用、修改和分发（包括商业用途），须保留版权及许可声明；不提供担保。第三方依赖及导入资料遵循各自许可，MIT 不授予它们的权利。
 
 默认 prepared/archive/搜索浏览不需要服务端模型密钥。后台 compile/问答需要另行配置兼容 Anthropic Messages 的模型服务；默认网关与模型名仅保留既有实现背景，不保证可用。不需要后台模型时不要配置密钥、不要调用 compile。
 
@@ -74,4 +84,4 @@ py -3.12 _service/scripts/test_correction.py
 
 仅绑定 127.0.0.1。当前不具备面向公网的登录鉴权、多租户隔离和完整生产审计，不要直接映射公网端口。网页为只读，不代表所有 API 都只读。服务器部署前应另外完成鉴权、TLS、访问控制、备份恢复和并发验证。
 
-运行态数据与配置必须留在忽略目录；上传 Git 前仍应检查暂存文件。仓库没有附加开源许可证，私有保存不等于授权公开传播。
+运行态数据与配置必须留在忽略目录；上传 Git 前仍应检查暂存文件。公开的是实现代码，不是使用者导入的资料。MIT 不代表服务已完成安全加固。
