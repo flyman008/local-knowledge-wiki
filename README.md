@@ -23,6 +23,7 @@ py -3.12 -m venv .venv
 3. [Claude Code / Codex / WorkBuddy 接入](docs/clients.md)：安装位置、路径调整与实际接通验证。
 4. [维护、备份恢复与排错](docs/operations.md)：升级前保护数据，异常时不盲目重试。
 5. [本次交付验证记录](docs/verification.md)：区分已验证和未验证。
+6. [原材料日期](docs/material-dates.md)：日期入库、未知状态、网页筛选及保守历史补录。
 
 代码采用 [MIT License](LICENSE)，可使用、修改和分发（包括商业用途），须保留版权及许可声明；不提供担保。第三方依赖及导入资料遵循各自许可，MIT 不授予它们的权利。
 

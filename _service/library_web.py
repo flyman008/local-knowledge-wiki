@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 import db, domains, authority, review
 import archive
+import material_dates
 
 def make_router(cfg):
     router = APIRouter()
@@ -34,6 +35,7 @@ def make_router(cfg):
                     item[key]=current.get(key)
                 body=conn.execute("SELECT body FROM wiki_fts WHERE kb_id='library' AND doc_id=?",(item['id'],)).fetchone()
                 item['content_status']='needs_parse' if item['content_status']=='needs_parse' or (body and archive.is_placeholder(body['body'])) else ('readable' if body and body['body'].strip() else 'missing')
+                item['material_date']=material_dates.describe(authority.get_metadata(conn,'library',item['id']))
                 result.append(item)
             counts={r['status']:r['n'] for r in conn.execute("SELECT status,count(*) n FROM receipts WHERE kb_id='library' GROUP BY status")}
             return {'items':result,'receipt_counts':counts,'read_only':True}
@@ -47,6 +49,7 @@ def make_router(cfg):
             if not row: raise HTTPException(404,'知识条目不存在')
             item=dict(row); body=conn.execute("SELECT body FROM wiki_fts WHERE kb_id='library' AND doc_id=?",(doc_id,)).fetchone()
             item.update(body=body['body'] if body else '',body_available=body is not None,classification=domains.get(conn,'library',doc_id),source_metadata=authority.get_metadata(conn,'library',doc_id),review_items=review.context(conn,'library',doc_id),receipts=receipts(conn,doc_id))
+            item['material_date']=material_dates.describe(item['source_metadata'])
             item['content_status']='needs_parse' if row['status']=='needs_parse' or archive.is_placeholder(item['body']) else ('readable' if item['body'].strip() else 'missing')
             if item['content_status']=='needs_parse':
                 item.update(body='',body_available=False)

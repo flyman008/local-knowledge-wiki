@@ -4,7 +4,7 @@ import quality
 
 def submit(title, **kwargs):
     data = dict(title=title, raw_data=None, extract_text='第1页文字', wiki_text='内容标签：`AI`',
-                source_metadata={'source_kind':'sales_material','locator':'第1页','document_date':'2026-08'},
+                source_metadata={'source_kind':'sales_material','locator':'第1页','document_date':'2026-08','date_evidence':'document_date：第1页，2026年8月'},
                 classification={'scopes':['weimob'],'tags':['AI']})
     data.update(kwargs)
     data.pop('raw_data')

@@ -4,7 +4,7 @@ import json
 KINDS = {"unknown", "repo_wiki", "prd", "sales_material", "commercial_policy", "contract", "other"}
 FIELDS = {"source_kind", "publisher", "published_at", "effective_at", "product",
           "product_version", "scope", "repository", "commit", "source_revision",
-          "lifecycle", "locator", "document_date"}
+          "lifecycle", "locator", "document_date", "date_status", "date_note", "date_evidence"}
 
 def normalize(value):
     if value is None:

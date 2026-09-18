@@ -1,5 +1,7 @@
 {
   "source_kind": "other",
+  "date_status": "unknown",
+  "date_note": "示例原文全文未标注日期，不使用仓库提交时间代替",
   "publisher": "local-knowledge-wiki demo",
   "locator": "examples/first-intake/original.md 全文",
   "lifecycle": "虚构测试材料，不作为业务证据"

@@ -59,7 +59,7 @@ description: 将材料或任务产物收入 D:\Knowledge 的统一知识库（�
 
 提交 prepared 前对照原件复核高风险结论（支持范围、渠道状态、价格、数字、版本），逐条保留页码/章节及原文依据：
 - 各渠道分别保留「已开放/即将开放/规划中/未知」和适用时点，不把多渠道汇总成全部已支持。销售材料描述不等于已实测上线。
-- 材料日期 `document_date`、公开发布日期 `published_at`、生效日期 `effective_at`、产品版本 `product_version` 分开填写。封面日期不能证明产品发布时间；未知省略，不猜测。
+- 原材料日期必须检查：材料日期 `document_date`、公开发布日期 `published_at`、生效日期 `effective_at`、产品版本 `product_version` 分开填写。按原文精度用 YYYY / YYYY-MM / YYYY-MM-DD（明确时分可用 ISO 时间），不能补造日。封面日期只填 document_date，不当发布日期；入库、采集、文件属性时间均不能代替。`date_evidence` 记录每个日期对应的字段、原文位置及日期原话。找不到时省略日期字段，填 `date_status: unknown` 和 `date_note`（查过哪里、为什么未知）；有材料/发布日期填 known。业务生效日不能单独证明资料年龄。入库来源 JSON 必须带日期或未知说明；未知不拦截保存，不要求用户猜日期。
 - 截图数字只描述为截图所载，除非有依据，不称真实经营成果，也不擅自认定为演示数据。
 - 正文若列「内容标签」，使用反引号逐个列出，并与提交的结构化标签一致。
 - 发现影响能力判断、价格或承诺的不确定项，保存后用 review raise 登记并取得 ID；仅取得回执不能说已登记。待确认事项正文写问题与证据，不预先写“已登记”。普通文字错误直接修正，不交给用户逐字审批。
@@ -87,7 +87,9 @@ prepared 提交后、登记确认项后都用 status 回读分层验收。`quali
 ### 来源依据：入库记录，回答裁决
 
 prepared 提交时尽量准备来源 JSON，用 `--source-metadata-file "<路径>"` 传入。未知字段省略，不根据文件名猜测状态或版本。支持字符串字段：
-`source_kind`（repo_wiki/prd/sales_material/commercial_policy/contract/other/unknown）、`publisher`、`document_date`、`published_at`、`effective_at`、`product`、`product_version`、`scope`、`repository`、`commit`、`source_revision`、`lifecycle`、`locator`（原文页码/章节；逐条依据仍写在成果中）。来源不同于解析者；客户端生成的总结不能自称 Repo Wiki，只有实际基于对应代码的来源才能这样标。
+`source_kind`（repo_wiki/prd/sales_material/commercial_policy/contract/other/unknown）、`publisher`、`document_date`、`published_at`、`effective_at`、`date_status`（known/unknown）、`date_note`、`date_evidence`、`product`、`product_version`、`scope`、`repository`、`commit`、`source_revision`、`lifecycle`、`locator`（原文页码/章节；逐条依据仍写在成果中）。来源不同于解析者；客户端生成的总结不能自称 Repo Wiki，只有实际基于对应代码的来源才能这样标。
+
+日期未知可以正常保存；缺检查、格式混填或缺日期依据会返回提醒，查回执后补信息，不重复投原件。archive/compile 暂无这组结构化参数，明确回报日期尚未结构化，不声称已完整记录；archive 成稿不要为此改写正文。回答时披露原材料时间；价格、接口、模型能力等时效性事实需结合当前来源复核。较旧只提示复核，不自动删除或判无效，方法论和历史案例仍可能有价值。
 
 知识稿 version 是修订号，不是 product_version 或 source_revision。新元数据当前经 prepared 链路保存；旧材料未补录不能假称有权威来源标签。archive/compile 仍可用，但不支持该新增参数。
 

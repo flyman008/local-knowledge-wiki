@@ -1,10 +1,11 @@
 """Deterministic intake checks, not semantic fact verification. No model calls."""
 import json
 import re
+import material_dates
 
 
 def inspect(wiki, extract, metadata, classification, parse_complete, missing_pages):
-    findings = []
+    findings = material_dates.findings(metadata)
     def flag(code, message):
         findings.append({'code': code, 'message': message})
     if parse_complete and missing_pages:
@@ -25,7 +26,7 @@ def inspect(wiki, extract, metadata, classification, parse_complete, missing_pag
     claimed = bool(re.search(r'(?:已登记|登记为待核实|已记录为待确认)', wiki or ''))
     if claimed:
         flag('registration_claim', '正文声称已登记：必须逐项核对确认项 ID，不能仅凭存在其他确认项判通过')
-    return {'version':'intake-quality-v1', 'findings':findings,
+    return {'version':'intake-quality-v1', 'findings':findings, 'material_date':material_dates.describe(metadata),
             'registration_claim':claimed, 'content_review':'not_verified',
             'limits':'仅检查结构与有限文字线索，不验证语义、图像覆盖或事实真实性'}
 
@@ -36,6 +37,11 @@ def receipt_report(conn, receipt):
         return {'automatic_check':'not_checked', 'content_review':'not_verified',
                 'message':'旧回执或非 prepared 路径没有本轮检查记录，不能视为通过'}
     report = json.loads(row['payload'])
+    metadata_row = conn.execute('SELECT metadata FROM evidence_metadata WHERE receipt_id=?', (receipt['id'],)).fetchone()
+    metadata = json.loads(metadata_row['metadata']) if metadata_row else {}
+    # Date-only metadata repairs are audited separately; report their current state.
+    report['findings'] = [f for f in report['findings'] if not f['code'].startswith('source_date_')] + material_dates.findings(metadata)
+    report['material_date'] = material_dates.describe(metadata)
     items = receipt.get('review_items', [])
     current = [x for x in items if x.get('topic_version') == receipt.get('topic_version')]
     report['review_ids'] = [x['id'] for x in current]
