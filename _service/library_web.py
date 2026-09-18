@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse
 import db, domains, authority, review
 import archive
 import material_dates
+import media_retention
 
 def make_router(cfg):
     router = APIRouter()
@@ -18,6 +19,7 @@ def make_router(cfg):
             for key in ('saved_layers','missing_pages'):
                 item[key]=json.loads(item[key]) if item.get(key) else None
             archive.describe_content(item)
+            item['media'] = media_retention.read(conn, item['id']) or {'state':'unmanaged'}
             item.pop('raw_path',None); item.pop('dedup_key',None)
             result.append(item)
         return result
@@ -64,7 +66,13 @@ def make_router(cfg):
         if not row or not row['raw_path']: raise HTTPException(404,'没有关联原件')
         path=Path(row['raw_path']).resolve()
         roots=[Path(cfg.research_wiki_path).resolve()]+[Path(b.path).resolve() for b in cfg.knowledge_bases if b.id=='library']
-        if not any(path.is_relative_to(root/'raw') for root in roots) or not path.is_file(): raise HTTPException(404,'原件不可用')
+        if not any(path.is_relative_to(root/'raw') for root in roots): raise HTTPException(404,'原件不可用')
+        if not path.is_file():
+            conn=db.get_conn()
+            try: media=media_retention.read(conn,receipt_id)
+            finally: conn.close()
+            if media and media['state']=='purged': raise HTTPException(410,'原件已按保留策略清理；请下载精简保留包或回访来源。精简包不是原件。')
+            raise HTTPException(404,'原件不可用')
         return FileResponse(path,filename=path.name,media_type='application/octet-stream',headers={'X-Content-Type-Options':'nosniff'})
 
     @router.get('/legacy-admin')

@@ -11,6 +11,7 @@ from typing import Any
 import db as db_mod
 import storage as storage_mod
 import domains
+from media_retention import serialized
 
 
 @dataclass
@@ -33,6 +34,7 @@ def _dedup_key(kb_id: str, target_kb_id: str, url: str | None, text: str | None,
     return f"none:{uuid.uuid4().hex}"
 
 
+@serialized
 def submit_material(
     cfg,
     *,
@@ -157,6 +159,8 @@ def get_receipt(cfg, receipt_id: str) -> dict[str, Any] | None:
             d['topic_version'] = evidence['topic_version']
         import quality
         d['quality'] = quality.receipt_report(conn_evidence, d)
+        import media_retention
+        d['media'] = media_retention.read(conn_evidence, receipt_id) or {'state':'unmanaged'}
     finally:
         conn_evidence.close()
     if evidence:

@@ -36,6 +36,30 @@ config_mod.ensure_dirs(cfg)
 app = FastAPI(title="Knowledge 本地知识服务")
 from library_web import make_router
 app.include_router(make_router(cfg))
+import media_retention
+app.include_router(media_retention.make_router(cfg))
+
+# Independent of paid-model compile Worker, also active with plain uvicorn.
+import threading
+_media_stop = threading.Event()
+_media_thread = None
+
+@app.on_event('startup')
+def start_media_maintenance():
+    global _media_thread
+    _media_stop.clear()
+    def run():
+        while not _media_stop.is_set():
+            try: media_retention.sweep(cfg)
+            except Exception as exc: print('[media] cleanup deferred:', type(exc).__name__, flush=True)
+            _media_stop.wait(3600)
+    _media_thread = threading.Thread(target=run, daemon=True, name='media-retention')
+    _media_thread.start()
+
+@app.on_event('shutdown')
+def stop_media_maintenance():
+    _media_stop.set()
+    if _media_thread: _media_thread.join(timeout=5)
 
 @app.exception_handler(ValueError)
 async def bad_value(request, exc):
@@ -43,7 +67,7 @@ async def bad_value(request, exc):
 
 @app.get('/api/capabilities')
 def capabilities():
-    return {'taxonomy':'scopes-tags-v1','storage':'library','scopes':['weimob','external'],'tags_multiselect':True,'quality':'intake-quality-v1'}
+    return {'taxonomy':'scopes-tags-v1','storage':'library','scopes':['weimob','external'],'tags_multiselect':True,'quality':'intake-quality-v1','media':'retention-v1'}
 _worker: queue_mod.Worker | None = None
 
 

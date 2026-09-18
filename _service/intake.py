@@ -410,6 +410,35 @@ def review_command(args) -> int:
         return 1
 
 
+def media_command(args) -> int:
+    import json
+    from pathlib import Path
+    from urllib.parse import urlencode
+    if not ensure_service(): return 1
+    try:
+        if args.operation in ('status', 'inventory'):
+            if not args.receipt: raise ValueError('需要 --receipt')
+            result = _get('/api/media/' + args.operation + '?' + urlencode({'receipt_id':args.receipt}))
+        elif args.operation == 'prepare':
+            if not args.file: raise ValueError('需要 --file 媒体验收JSON')
+            payload = Path(args.file).read_text(encoding='utf-8-sig')
+            json.loads(payload)
+            if args.assets:
+                result = _post_file('/api/media/prepare', Path(args.assets).name, Path(args.assets).read_bytes(), {'payload':payload})
+            else:
+                req = urllib.request.Request(SERVICE+'/api/media/prepare',data=urlencode({'payload':payload}).encode(),method='POST')
+                with urllib.request.urlopen(req, timeout=600) as response: result=json.loads(response.read())
+        else:
+            if not args.receipt: raise ValueError('需要 --receipt')
+            result = _post_json('/api/media/action', {'receipt_id':args.receipt,'action':args.operation})
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 3 if result.get('state')=='blocked' else 0
+    except urllib.error.HTTPError as exc:
+        print(exc.read().decode('utf-8'),file=sys.stderr); return 1
+    except (ValueError, OSError) as exc:
+        print(str(exc), file=sys.stderr); return 1
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description="知识库入库 CLI")
     sub = p.add_subparsers(dest="cmd")
@@ -456,6 +485,12 @@ def main() -> int:
     rv.add_argument('--file', help='操作 JSON 文件')
     rv.add_argument('--kb', default=None)
     rv.set_defaults(func=review_command)
+    md = sub.add_parser('media', help='媒体验收清单、7天待清理及取消；不调用模型')
+    md.add_argument('operation',choices=['inventory','prepare','status','stage','cancel'])
+    md.add_argument('--receipt')
+    md.add_argument('--file',help='验收JSON')
+    md.add_argument('--assets',help='仅关键帧ZIP（prepare可选）')
+    md.set_defaults(func=media_command)
 
     args = p.parse_args()
     if not args.cmd:

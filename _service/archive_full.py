@@ -17,6 +17,7 @@ import uuid
 import json
 import authority
 import domains
+from media_retention import serialized
 from dataclasses import dataclass, field
 
 import db as db_mod
@@ -53,6 +54,7 @@ def _layer_fingerprint(raw_data, extract_text, wiki_text, title, url, publisher,
     return hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()
 
 
+@serialized
 def archive_full(
     cfg,
     *,

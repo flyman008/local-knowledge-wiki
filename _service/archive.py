@@ -13,6 +13,7 @@ import db as db_mod
 import storage as storage_mod
 import domains
 import json
+from media_retention import serialized
 
 
 @dataclass
@@ -48,6 +49,7 @@ def describe_content(receipt):
     return receipt
 
 
+@serialized
 def archive_content(
     cfg,
     *,
