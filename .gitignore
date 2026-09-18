@@ -1,0 +1,15 @@
+_local/
+content/
+_packages/
+.env
+.env.*
+config.yaml
+*.db
+*.db-*
+*.sqlite*
+*.log
+*.bak
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/

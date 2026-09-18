@@ -1,0 +1,16 @@
+# 可选配置。复制到仓库根目录 _local/config.yaml 后修改。
+# 不配置 knowledge_bases/research_wiki 时使用相对仓库根的统一 content 目录。
+# prepared/archive/浏览无需模型；只有明确使用后台模型时填写真实值。
+llm:
+  base_url: "https://your-messages-compatible-endpoint.example"
+  text_model: "your-text-model"
+  vision_model: "your-vision-model"
+  api_key_env: "ANTHROPIC_AUTH_TOKEN"
+  max_tokens: 4096
+  timeout_seconds: 120
+service:
+  host: "127.0.0.1"
+  port: 8765
+  worker_concurrency: 1
+  max_retries: 3
+  daily_material_limit: 50
