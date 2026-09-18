@@ -3,6 +3,7 @@ import json
 import uuid
 import db
 import domains
+import remediation
 
 def _json(value):
     return json.dumps(value, ensure_ascii=False)
@@ -30,6 +31,7 @@ def context(conn, kb_id, doc_id):
         item['evidence'] = json.loads(item['evidence'])
         item['decision'] = json.loads(item['decision']) if item['decision'] else None
         item['applies_to_current_version'] = bool(topic and topic['version'] == item['topic_version'])
+        item['handling'] = remediation.category(item)
         result.append(item)
     return result
 
@@ -37,7 +39,30 @@ def execute(operation, data):
     conn = db.get_conn()
     try:
         conn.execute('BEGIN IMMEDIATE')
-        if operation == 'raise':
+        if operation == 'repair':
+            result = remediation.repair(conn, data)
+        elif operation == 'reopen-repair':
+            result = remediation.reopen(conn, data)
+        elif operation == 'limitation':
+            kb, doc = _text(data,'kb_id'), _text(data,'doc_id')
+            topic = conn.execute('SELECT version FROM topics WHERE kb_id=? AND id=?',(kb,doc)).fetchone()
+            body = conn.execute('SELECT body FROM wiki_fts WHERE kb_id=? AND doc_id=?',(kb,doc)).fetchone()
+            limitation = _text(data,'limitation')
+            # A notice preserves a restriction; it never settles an existing question.
+            if not topic or topic['version'] != data.get('topic_version') or not body or limitation not in body['body']:
+                raise ValueError('引用限制须已写入当前知识稿，且版本一致')
+            if data.get('category') != 'source_not_disclosed':
+                raise ValueError('仅原文未披露的信息可登记引用限制；口径冲突仍需 raise')
+            locator = _text(data,'locator')
+            existing = conn.execute("SELECT id FROM review_items WHERE kb_id=? AND doc_id=? AND topic_version=? AND status='notice' AND question=?",(kb,doc,topic['version'],limitation)).fetchone()
+            if existing:
+                result = {'id':existing['id'],'status':'notice','is_duplicate':True}
+            else:
+                item_id = add(conn,kb,doc,topic['version'],'uncertain',limitation,[{'statement':limitation,'locator':locator}])
+                conn.execute("UPDATE review_items SET status='notice' WHERE id=?",(item_id,))
+                conn.execute('INSERT INTO review_events(item_id,revision,payload,created_at) VALUES(?,?,?,?)',(item_id,1,_json({'action':'record_limitation','category':'source_not_disclosed','semantic_verified':False}),db.now_iso()))
+                result = {'id':item_id,'status':'notice','revision':1}
+        elif operation == 'raise':
             kb, doc = _text(data,'kb_id'), _text(data,'doc_id')
             row = conn.execute('SELECT version FROM topics WHERE kb_id=? AND id=?',(kb,doc)).fetchone()
             if not row or data.get('topic_version') != row['version']:

@@ -29,7 +29,7 @@ def make_router(cfg):
             result=[]
             for row in conn.execute("SELECT * FROM topics WHERE kb_id='library' ORDER BY updated_at DESC,id"):
                 item=dict(row); item['classification']=domains.get(conn,'library',item['id'])
-                item['pending_count']=conn.execute("SELECT count(*) FROM review_items WHERE kb_id='library' AND doc_id=? AND topic_version=? AND status='pending'",(item['id'],item['version'])).fetchone()[0]
+                item['pending_count']=conn.execute("SELECT count(*) FROM review_items WHERE kb_id='library' AND doc_id=? AND status='pending'",(item['id'],)).fetchone()[0]
                 current=next((r for r in receipts(conn,item['id']) if r['topic_version']==item['version']),{})
                 for key in ('parse_complete','saved_layers','source_url','content_status'):
                     item[key]=current.get(key)

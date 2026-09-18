@@ -452,7 +452,7 @@ def main() -> int:
     sr.add_argument('--tag', help='按一个标签过滤，可与 scope 组合')
     sr.set_defaults(func=search_material)
     rv = sub.add_parser('review', help='列出冲突/不确定项、提交人工裁决或策略建议；不调用模型')
-    rv.add_argument('operation', choices=['list','raise','decide','propose-policy','policy-state'])
+    rv.add_argument('operation', choices=['list','raise','limitation','decide','repair','reopen-repair','propose-policy','policy-state'])
     rv.add_argument('--file', help='操作 JSON 文件')
     rv.add_argument('--kb', default=None)
     rv.set_defaults(func=review_command)

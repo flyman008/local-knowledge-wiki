@@ -28,4 +28,28 @@ action：adopt 采纳、coexist 按范围并存、supersede 新版替代、unres
 
 ## 完成口径
 
+## repair：补读后的服务核验（不需冒充人工确认）
+
+先 prepared 保存同原件补读新版，必须填写 correction-reason/base-version；读取原事项最新 revision 和新回执。然后执行 `intake.py review repair --file repair.json`：
+
+```json
+{"id":"原解析缺失review ID","expected_revision":1,"receipt_id":"实际补读新版回执","checked_by":"实际客户端/解析工具","coverage":[{"page":2,"locator":"原件第2页右侧图表","quote":"已保存解析稿中至少12字符的实际补读内容引用"}]}
+```
+
+coverage 覆盖原 missing_pages 全部编号，区分 PDF 页码与网页图片编号。服务核对：该回执属于同主题当前且紧接原版本、同原件哈希、三层齐备、无剩余缺失/解析矛盾、已声明纠错和基准版本、引用确实存在于解析快照。不是视觉内容真伪认证，实际读图责任仍属客户端。未知缺失范围不能自动关闭。
+
+成功返回 closed_ids / remaining_pending。仅无其他业务未决项时一并关闭本次自动生成的版本更替事项。其他事项原样保留。用 status 和 review list 回读，不以提交成功代替解决；中断后先查事项状态，版本不连续时不要重投材料硬凑条件。
+
+误关闭可执行 `review reopen-repair --file reopen.json`：`{"id":"自动关闭的事项ID","expected_revision":2,"reason":"实际发现的补读问题"}`。操作保留原决定和事件，可针对历史版本重新打开技术事项；不伪造 user_confirmed。
+
+## limitation：保留引用限制，不增加人工待办
+
+仅原文未披露方法/范围且保留限定即可安全使用时调用。先将限制逐字写入知识稿，再执行 `review limitation --file limitation.json`：
+
+```json
+{"kb_id":"library","doc_id":"实际主题ID","topic_version":1,"category":"source_not_disclosed","limitation":"厂商未披露测试样本，不能作为客户效果保证。","locator":"原文评测段"}
+```
+
+返回 status=notice，只表示引用限制已登记，不是事实已确认。相同主题版本及限制去重。不用于价格争议、支持状态冲突或版本裁决，不转换或关闭旧 pending。检索回答须遵守 notice，不因它不在待办数里就省略限制。
+
 材料保存、解析完整、问题解决是不同状态。CLI submit 成功退出码不代表无冲突；review resolve 不代表全文认证。回报剩余待确认项。服务尚未重启/缺少接口时明确报接通未完成，不绕过服务写库。
